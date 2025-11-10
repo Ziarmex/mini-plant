@@ -18,71 +18,71 @@ Simulation d'une mini-usine industrielle IoT avec communication sécurisée TLS,
 
 Ce projet simule une mini-usine industrielle connectée avec :
 
-- **6 dispositifs IoT** simulant machines de production, capteurs de température, pression, vibration et compteur d'énergie
-- **Communication sécurisée** via MQTT avec TLS 1.2
-- **Pipeline de données** : MQTT → Node-RED → InfluxDB → Grafana
-- **Système d'alertes** pour anomalies et seuils critiques
-- **Environnement conteneurisé** avec Docker Compose
+- 6 dispositifs IoT simulant machines de production, capteurs de température, pression, vibration et compteur d'énergie
+- Communication sécurisée via MQTT avec TLS 1.2
+- Pipeline de données : MQTT → Node-RED → InfluxDB → Grafana
+- Système d'alertes pour anomalies et seuils critiques
+- Environnement conteneurisé avec Docker Compose
 
 ### Fonctionnalités clés
 
-✅ **Sécurité TLS obligatoire** - Toutes les communications chiffrées  
-✅ **Monitoring temps réel** - Dashboards Grafana interactifs  
-✅ **Alertes automatiques** - Notifications sur événements critiques  
-✅ **Scalable** - Ajout facile de nouveaux dispositifs  
-✅ **Isolation** - Chaque service dans son conteneur  
+- Sécurité TLS obligatoire - Toutes les communications chiffrées  
+- Monitoring temps réel - Dashboards Grafana interactifs  
+- Alertes automatiques - Notifications sur événements critiques  
+- Scalable - Ajout facile de nouveaux dispositifs  
+- Isolation - Chaque service dans son conteneur  
 
 ## Architecture
 
 ```
-┌─────────────────┐     ┌──────────────┐     ┌─────────────┐     ┌──────────────┐     ┌─────────────┐
-│  IoT Devices    │────▶│   Mosquitto  │────▶│  Node-RED   │────▶│  InfluxDB    │────▶│  Grafana    │
-│  (Simulateurs)  │ TLS │  MQTT Broker │ TLS │  (Pipeline) │     │ (Time-Series)│     │ (Dashboards)│
-└─────────────────┘     └──────────────┘     └─────────────┘     └──────────────┘     └─────────────┘
-        ↑                                              │
-        │                                              ↓
-        └──────────────────────────────────────[ Alertes ]
++-----------------+     +--------------+     +-------------+     +--------------+     +-------------+
+|  IoT Devices    |---->|   Mosquitto  |---->|  Node-RED   |---->|  InfluxDB    |---->|  Grafana    |
+|  (Simulateurs)  | TLS |  MQTT Broker | TLS |  (Pipeline) |     | (Time-Series)|     | (Dashboards)|
++-----------------+     +--------------+     +-------------+     +--------------+     +-------------+
+        ^                                              |
+        |                                              v
+        +--------------------------------------[ Alertes ]
 ```
 
 ### Composants
 
 | Composant | Description | Port |
 |-----------|-------------|------|
-| **Mosquitto** | Broker MQTT avec TLS | 8883 |
-| **InfluxDB** | Base de données time-series | 8086 |
-| **Node-RED** | Traitement des flux de données | 1880 |
-| **Grafana** | Visualisation et alertes | 3000 |
-| **IoT Simulators** | 6 dispositifs IoT simulés | - |
+| Mosquitto | Broker MQTT avec TLS | 8883 |
+| InfluxDB  | Base de données time-series | 8086 |
+| Node-RED  | Traitement des flux de données | 1880 |
+| Grafana   | Visualisation et alertes | 3000 |
+| IoT Simulators | 6 dispositifs IoT simulés | - |
 
 ### Dispositifs IoT
 
-1. **machine-1, machine-2** : Machines de production
+1. machine-1, machine-2 : Machines de production
    - Vitesse (RPM), taux de production, efficacité
    - Simulation de pannes aléatoires
 
-2. **temp-sensor-1** : Capteur de température
+2. temp-sensor-1 : Capteur de température
    - Température, humidité
    - Alertes sur surchauffe
 
-3. **pressure-sensor-1** : Capteur de pression
+3. pressure-sensor-1 : Capteur de pression
    - Pression en bars
    - Alertes sur surpression
 
-4. **vibration-sensor-1** : Capteur de vibrations
+4. vibration-sensor-1 : Capteur de vibrations
    - Vibrations X/Y/Z
    - Détection d'anomalies
 
-5. **energy-meter-1** : Compteur d'énergie
+5. energy-meter-1 : Compteur d'énergie
    - Puissance, consommation totale
    - Tension, courant
 
 ## Prérequis
 
-- **Docker** >= 20.10
-- **Docker Compose** >= 2.0
-- **OpenSSL** (pour génération certificats)
-- **Python 3.11+** (pour tests)
-- **Ports libres** : 1880, 3000, 8086, 8883, 9001
+- Docker >= 20.10
+- Docker Compose >= 2.0
+- OpenSSL (pour génération certificats)
+- Python 3.11+ (pour tests)
+- Ports libres : 1880, 3000, 8086, 8883, 9001
 
 ### Vérification
 
@@ -135,10 +135,10 @@ chmod +x scripts/generate-certs.sh
 ./scripts/generate-certs.sh
 ```
 
-Cela crée dans `./certs/` :
-- `ca.crt` / `ca.key` : Autorité de certification
-- `server.crt` / `server.key` : Certificat serveur (Mosquitto)
-- `client.crt` / `client.key` : Certificat client (dispositifs IoT)
+Cela crée dans ./certs/ :
+- ca.crt / ca.key : Autorité de certification
+- server.crt / server.key : Certificat serveur (Mosquitto)
+- client.crt / client.key : Certificat client (dispositifs IoT)
 
 ### 4. Créer le fichier de mots de passe Mosquitto
 
@@ -148,28 +148,28 @@ docker run -it --rm -v $(pwd)/mosquitto/config:/mosquitto/config eclipse-mosquit
   mosquitto_passwd -c /mosquitto/config/passwd iot-user
 ```
 
-Entrez un mot de passe (ex: `iot-password123`)
+Entrez un mot de passe (ex: iot-password123)
 
 ## Configuration
 
 ### Variables d'environnement importantes
 
-Dans `docker-compose.yml`, vous pouvez personnaliser :
+Dans docker-compose.yml, vous pouvez personnaliser :
 
-**InfluxDB**
+InfluxDB
 ```yaml
 DOCKER_INFLUXDB_INIT_USERNAME=admin
 DOCKER_INFLUXDB_INIT_PASSWORD=adminpassword123
 DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=my-super-secret-auth-token
 ```
 
-**Grafana**
+Grafana
 ```yaml
 GF_SECURITY_ADMIN_USER=admin
 GF_SECURITY_ADMIN_PASSWORD=admin123
 ```
 
-**Alertes email** (optionnel)
+Alertes email (optionnel)
 ```yaml
 GF_SMTP_ENABLED=true
 GF_SMTP_HOST=smtp.gmail.com:587
@@ -221,25 +221,25 @@ docker-compose up -d iot-machine-1 iot-temp-sensor-1 iot-pressure-sensor-1
 
 ### Accès aux interfaces
 
-| Service | URL | Identifiants |
-|---------|-----|--------------|
-| **Grafana** | http://localhost:3000 | admin / admin123 |
-| **Node-RED** | http://localhost:1880 | - |
-| **InfluxDB** | http://localhost:8086 | admin / adminpassword123 |
+| Service   | URL                    | Identifiants              |
+|-----------|------------------------|---------------------------|
+| Grafana   | http://localhost:3000  | admin / admin123          |
+| Node-RED  | http://localhost:1880  | -                         |
+| InfluxDB  | http://localhost:8086  | admin / adminpassword123  |
 
 ### Vérifier les données
 
-**Dans InfluxDB :**
+Dans InfluxDB :
 ```bash
 docker exec -it influxdb influx query 'from(bucket:"iot-data") |> range(start: -1h) |> limit(n:10)'
 ```
 
-**Dans Node-RED :**
+Dans Node-RED :
 1. Ouvrir http://localhost:1880
 2. Vérifier le flux "MQTT → InfluxDB Pipeline"
 3. Activer les nodes debug pour voir les données
 
-**Dans Grafana :**
+Dans Grafana :
 1. Ouvrir http://localhost:3000
 2. Dashboard "Mini-Usine IoT Dashboard"
 3. Observer les métriques en temps réel
@@ -258,13 +258,13 @@ python3 scripts/test-security.py
 
 ### Tests manuels
 
-**Test 1 : Connexion sans TLS (doit échouer)**
+Test 1 : Connexion sans TLS (doit échouer)
 ```bash
 mosquitto_pub -h localhost -p 8883 -t test -m "hello"
 # Erreur attendue
 ```
 
-**Test 2 : Connexion avec TLS (doit réussir)**
+Test 2 : Connexion avec TLS (doit réussir)
 ```bash
 mosquitto_pub -h localhost -p 8883 \
   --cafile certs/ca.crt \
@@ -274,7 +274,7 @@ mosquitto_pub -h localhost -p 8883 \
 # Succès
 ```
 
-**Test 3 : Vérifier le chiffrement**
+Test 3 : Vérifier le chiffrement
 ```bash
 # Capturer le trafic (nécessite tcpdump)
 docker exec mosquitto tcpdump -i any -n port 8883 -X
@@ -286,23 +286,23 @@ docker exec mosquitto tcpdump -i any -n port 8883 -X
 ```
 === TESTS DE SÉCURITÉ TLS - MINI-USINE IoT ===
 
-✓ PASS - Connexion sans TLS
+PASS - Connexion sans TLS
       Connexion refusée comme attendu
 
-✓ PASS - Certificats incorrects
+PASS - Certificats incorrects
       Connexion refusée comme attendu
 
-✓ PASS - TLS valide
+PASS - TLS valide
       Connexion TLS sécurisée établie avec succès
 
-✓ PASS - Version TLS
+PASS - Version TLS
       TLS 1.2 supporté (sécurisé)
 
-✓ PASS - Vérification certificats
+PASS - Vérification certificats
       Vérification stricte des certificats activée
 
 Tests réussis: 5/5 (100%)
-✓ TOUS LES TESTS SONT PASSÉS
+TOUS LES TESTS SONT PASSÉS
 ```
 
 ## Monitoring et alertes
@@ -311,44 +311,44 @@ Tests réussis: 5/5 (100%)
 
 Le dashboard principal affiche :
 
-1. **Production Machines Status** : État et vitesse des machines
-2. **Temperature Sensors** : Graphique températures
-3. **Machine Efficiency** : Jauge d'efficacité
-4. **Pressure Monitoring** : Surveillance pression
-5. **Vibration Analysis** : Analyse vibrations
-6. **Energy Consumption** : Consommation instantanée
-7. **Machine Downtime** : Temps d'arrêt cumulé
-8. **Total Energy Consumed** : Énergie totale
+1. Production Machines Status : État et vitesse des machines
+2. Temperature Sensors : Graphique températures
+3. Machine Efficiency : Jauge d'efficacité
+4. Pressure Monitoring : Surveillance pression
+5. Vibration Analysis : Analyse vibrations
+6. Energy Consumption : Consommation instantanée
+7. Machine Downtime : Temps d'arrêt cumulé
+8. Total Energy Consumed : Énergie totale
 
 ### Configuration des alertes
 
-**Dans Node-RED :**
+Dans Node-RED :
 - Les alertes sont détectées dans la fonction "Check Alert Thresholds"
 - Seuils configurables pour chaque type de capteur
 
-**Dans Grafana :**
+Dans Grafana :
 
 1. Aller dans un panel → Edit
 2. Onglet "Alert"
 3. Configurer :
-   - Condition (ex: `temperature > 80`)
+   - Condition (ex: temperature > 80)
    - Évaluation (ex: toutes les 1m pendant 5m)
    - Notification channel
 
-**Exemple d'alerte température :**
+Exemple d'alerte température :
 ```
 WHEN last() OF query(A, 5m, now) IS ABOVE 80
 ```
 
 ### Canaux de notification
 
-**Email** (configuré dans docker-compose.yml)
+Email (configuré dans docker-compose.yml)
 ```yaml
 GF_SMTP_ENABLED=true
 GF_SMTP_HOST=smtp.gmail.com:587
 ```
 
-**Webhook** (à configurer dans Grafana)
+Webhook (à configurer dans Grafana)
 ```json
 {
   "url": "https://your-webhook.com/alert",
@@ -356,7 +356,7 @@ GF_SMTP_HOST=smtp.gmail.com:587
 }
 ```
 
-##  Dépannage
+## Dépannage
 
 ### Problème : Certificats TLS invalides
 
@@ -426,7 +426,7 @@ docker-compose logs --tail=100
 
 ### Ajouter un nouveau dispositif
 
-1. Dupliquer un service dans `docker-compose.yml` :
+1. Dupliquer un service dans docker-compose.yml :
 
 ```yaml
 iot-machine-3:
@@ -460,11 +460,11 @@ docker-compose up -d iot-machine-3
 
 ### Performances
 
-- **Latence** : < 2 secondes bout-en-bout
-- **Débit** : Testé avec 10+ dispositifs simultanés
-- **Capacité** : InfluxDB peut gérer millions de points/seconde
+- Latence : < 2 secondes bout-en-bout
+- Débit : Testé avec 10+ dispositifs simultanés
+- Capacité : InfluxDB peut gérer millions de points/seconde
 
-##  Tests end-to-end
+## Tests end-to-end
 
 ```bash
 # 1. Publier un message de test
@@ -520,17 +520,17 @@ docker stats
 docker system prune -a
 ```
 
-##  Bonnes pratiques de sécurité
+## Bonnes pratiques de sécurité
 
-✅ **Toujours utiliser TLS** pour les communications MQTT  
-✅ **Changer les mots de passe** par défaut  
-✅ **Renouveler les certificats** régulièrement (avant expiration)  
-✅ **Limiter les accès réseau** avec des règles firewall  
-✅ **Monitorer les logs** pour détecter les anomalies  
-✅ **Mettre à jour** les images Docker régulièrement  
-✅ **Sauvegarder** les données InfluxDB  
+- Toujours utiliser TLS pour les communications MQTT  
+- Changer les mots de passe par défaut  
+- Renouveler les certificats régulièrement (avant expiration)  
+- Limiter les accès réseau avec des règles firewall  
+- Monitorer les logs pour détecter les anomalies  
+- Mettre à jour les images Docker régulièrement  
+- Sauvegarder les données InfluxDB  
 
-##  Ressources
+## Ressources
 
 - [Mosquitto Documentation](https://mosquitto.org/documentation/)
 - [InfluxDB Documentation](https://docs.influxdata.com/)
@@ -538,14 +538,14 @@ docker system prune -a
 - [Grafana Documentation](https://grafana.com/docs/)
 - [MQTT TLS Security](https://mosquitto.org/man/mosquitto-tls-7.html)
 
-##  Licence
+## Licence
 
 Ce projet est fourni à des fins éducatives et de démonstration.
 
-##  Contribution
+## Contribution
 
 Pour toute question ou amélioration, n'hésitez pas à ouvrir une issue ou une pull request.
 
 ---
 
-**Projet Mini-Usine IoT** - Démonstration d'une infrastructure IoT industrielle sécurisée 🏭🔒
+Projet Mini-Usine IoT - Démonstration d'une infrastructure IoT industrielle sécurisée
