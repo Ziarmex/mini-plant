@@ -1,0 +1,231 @@
+version: '3.8'
+
+services:
+  # MQTT Broker avec TLS
+  mosquitto:
+    image: eclipse-mosquitto:2.0
+    container_name: mqtt-broker
+    ports:
+      - "8883:8883"  # MQTTS
+      - "9001:9001"  # WebSockets
+    volumes:
+      - ./mosquitto/config/mosquitto.conf:/mosquitto/config/mosquitto.conf
+      - ./certs:/mosquitto/certs:ro
+      - mosquitto-data:/mosquitto/data
+      - mosquitto-logs:/mosquitto/log
+    networks:
+      - iot-network
+    restart: unless-stopped
+
+  # InfluxDB - Base de données time-series
+  influxdb:
+    image: influxdb:2.7
+    container_name: influxdb
+    ports:
+      - "8086:8086"
+    environment:
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_INIT_USERNAME=admin
+      - DOCKER_INFLUXDB_INIT_PASSWORD=adminpassword123
+      - DOCKER_INFLUXDB_INIT_ORG=mini-plant
+      - DOCKER_INFLUXDB_INIT_BUCKET=iot-data
+      - DOCKER_INFLUXDB_INIT_RETENTION=30d
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=my-super-secret-auth-token
+    volumes:
+      - influxdb-data:/var/lib/influxdb2
+      - influxdb-config:/etc/influxdb2
+    networks:
+      - iot-network
+    restart: unless-stopped
+
+  # Node-RED - Traitement des flux
+  nodered:
+    image: nodered/node-red:latest
+    container_name: node-red
+    ports:
+      - "1880:1880"
+    environment:
+      - TZ=Europe/Paris
+    volumes:
+      - nodered-data:/data
+      - ./certs:/certs:ro
+    networks:
+      - iot-network
+    depends_on:
+      - mosquitto
+      - influxdb
+    restart: unless-stopped
+
+  # Grafana - Visualisation et alertes
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+      - GF_INSTALL_PLUGINS=grafana-clock-panel
+      - GF_SMTP_ENABLED=true
+      - GF_SMTP_HOST=smtp.gmail.com:587
+      - GF_SMTP_USER=your-email@gmail.com
+      - GF_SMTP_PASSWORD=your-app-password
+      - GF_SMTP_FROM_ADDRESS=your-email@gmail.com
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+    networks:
+      - iot-network
+    depends_on:
+      - influxdb
+    restart: unless-stopped
+
+  # Simulateur IoT - Machine de production 1
+  iot-machine-1:
+    build:
+      context: ./simulators
+      dockerfile: Dockerfile
+    container_name: iot-machine-1
+    environment:
+      - DEVICE_ID=machine-1
+      - DEVICE_TYPE=production
+      - MQTT_BROKER=mosquitto
+      - MQTT_PORT=8883
+      - PUBLISH_INTERVAL=5
+      - CA_CERT=/certs/ca.crt
+      - CLIENT_CERT=/certs/client.crt
+      - CLIENT_KEY=/certs/client.key
+    volumes:
+      - ./certs:/certs:ro
+    networks:
+      - iot-network
+    depends_on:
+      - mosquitto
+    restart: unless-stopped
+
+  # Simulateur IoT - Machine de production 2
+  iot-machine-2:
+    build:
+      context: ./simulators
+      dockerfile: Dockerfile
+    container_name: iot-machine-2
+    environment:
+      - DEVICE_ID=machine-2
+      - DEVICE_TYPE=production
+      - MQTT_BROKER=mosquitto
+      - MQTT_PORT=8883
+      - PUBLISH_INTERVAL=5
+      - CA_CERT=/certs/ca.crt
+      - CLIENT_CERT=/certs/client.crt
+      - CLIENT_KEY=/certs/client.key
+    volumes:
+      - ./certs:/certs:ro
+    networks:
+      - iot-network
+    depends_on:
+      - mosquitto
+    restart: unless-stopped
+
+  # Simulateur IoT - Capteur de température 1
+  iot-temp-sensor-1:
+    build:
+      context: ./simulators
+      dockerfile: Dockerfile
+    container_name: iot-temp-sensor-1
+    environment:
+      - DEVICE_ID=temp-sensor-1
+      - DEVICE_TYPE=temperature
+      - MQTT_BROKER=mosquitto
+      - MQTT_PORT=8883
+      - PUBLISH_INTERVAL=3
+      - CA_CERT=/certs/ca.crt
+      - CLIENT_CERT=/certs/client.crt
+      - CLIENT_KEY=/certs/client.key
+    volumes:
+      - ./certs:/certs:ro
+    networks:
+      - iot-network
+    depends_on:
+      - mosquitto
+    restart: unless-stopped
+
+  # Simulateur IoT - Capteur de pression 1
+  iot-pressure-sensor-1:
+    build:
+      context: ./simulators
+      dockerfile: Dockerfile
+    container_name: iot-pressure-sensor-1
+    environment:
+      - DEVICE_ID=pressure-sensor-1
+      - DEVICE_TYPE=pressure
+      - MQTT_BROKER=mosquitto
+      - MQTT_PORT=8883
+      - PUBLISH_INTERVAL=4
+      - CA_CERT=/certs/ca.crt
+      - CLIENT_CERT=/certs/client.crt
+      - CLIENT_KEY=/certs/client.key
+    volumes:
+      - ./certs:/certs:ro
+    networks:
+      - iot-network
+    depends_on:
+      - mosquitto
+    restart: unless-stopped
+
+  # Simulateur IoT - Capteur de vibration 1
+  iot-vibration-sensor-1:
+    build:
+      context: ./simulators
+      dockerfile: Dockerfile
+    container_name: iot-vibration-sensor-1
+    environment:
+      - DEVICE_ID=vibration-sensor-1
+      - DEVICE_TYPE=vibration
+      - MQTT_BROKER=mosquitto
+      - MQTT_PORT=8883
+      - PUBLISH_INTERVAL=2
+      - CA_CERT=/certs/ca.crt
+      - CLIENT_CERT=/certs/client.crt
+      - CLIENT_KEY=/certs/client.key
+    volumes:
+      - ./certs:/certs:ro
+    networks:
+      - iot-network
+    depends_on:
+      - mosquitto
+    restart: unless-stopped
+
+  # Simulateur IoT - Compteur d'énergie
+  iot-energy-meter:
+    build:
+      context: ./simulators
+      dockerfile: Dockerfile
+    container_name: iot-energy-meter
+    environment:
+      - DEVICE_ID=energy-meter-1
+      - DEVICE_TYPE=energy
+      - MQTT_BROKER=mosquitto
+      - MQTT_PORT=8883
+      - PUBLISH_INTERVAL=10
+      - CA_CERT=/certs/ca.crt
+      - CLIENT_CERT=/certs/client.crt
+      - CLIENT_KEY=/certs/client.key
+    volumes:
+      - ./certs:/certs:ro
+    networks:
+      - iot-network
+    depends_on:
+      - mosquitto
+    restart: unless-stopped
+
+networks:
+  iot-network:
+    driver: bridge
+
+volumes:
+  mosquitto-data:
+  mosquitto-logs:
+  influxdb-data:
+  influxdb-config:
+  nodered-data:
+  grafana-data:
