@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # MQTT Broker avec TLS
   mosquitto:
@@ -7,12 +5,12 @@ services:
     container_name: mqtt-broker
     ports:
       - "8883:8883"  # MQTTS
-      - "9001:9001"  # WebSockets
     volumes:
       - ./mosquitto/config/mosquitto.conf:/mosquitto/config/mosquitto.conf
       - ./certs:/mosquitto/certs:ro
       - mosquitto-data:/mosquitto/data
       - mosquitto-logs:/mosquitto/log
+    # Port 1883 exposé seulement en interne (pas mappé sur l'hôte)
     networks:
       - iot-network
     restart: unless-stopped
@@ -38,17 +36,20 @@ services:
       - iot-network
     restart: unless-stopped
 
-  # Node-RED - Traitement des flux
-  nodered:
-    image: nodered/node-red:latest
-    container_name: node-red
-    ports:
-      - "1880:1880"
+  # MQTT -> InfluxDB Bridge
+  bridge:
+    build:
+      context: ./bridge
+      dockerfile: Dockerfile
+    container_name: iot-bridge
     environment:
-      - TZ=Europe/Paris
-    volumes:
-      - nodered-data:/data
-      - ./certs:/certs:ro
+      - MQTT_BROKER=mosquitto
+      - MQTT_PORT=1883
+      - MQTT_TOPIC=iot/plant/#
+      - INFLUXDB_URL=http://influxdb:8086
+      - INFLUXDB_TOKEN=my-super-secret-auth-token
+      - INFLUXDB_ORG=mini-plant
+      - INFLUXDB_BUCKET=iot-data
     networks:
       - iot-network
     depends_on:
@@ -61,7 +62,7 @@ services:
     image: grafana/grafana:latest
     container_name: grafana
     ports:
-      - "3000:3000"
+      - "3001:3000"
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin123
@@ -227,5 +228,4 @@ volumes:
   mosquitto-logs:
   influxdb-data:
   influxdb-config:
-  nodered-data:
   grafana-data:

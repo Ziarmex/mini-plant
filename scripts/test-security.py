@@ -34,30 +34,33 @@ class SecurityTester:
         """Test 1: Connexion sans TLS doit échouer"""
         print("\n[Test 1] Connexion sans TLS (doit échouer)...")
         
-        try:
-            client = mqtt.Client("security-test-no-tls")
-            client.connect(self.broker, self.port_tls, 5)
-            client.loop_start()
-            time.sleep(2)
-            client.loop_stop()
-            client.disconnect()
-            
-            # Si on arrive ici, le test a échoué
+        connected = [False]
+        
+        def on_connect(client, userdata, flags, rc):
+            connected[0] = (rc == 0)
+        
+        client = mqtt.Client("security-test-no-tls")
+        client.on_connect = on_connect
+        client.connect(self.broker, self.port_tls, 5)
+        client.loop_start()
+        time.sleep(2)
+        client.loop_stop()
+        client.disconnect()
+        
+        if not connected[0]:
+            self.print_result(
+                "Connexion sans TLS",
+                True,
+                "Connexion refusée comme attendu"
+            )
+            return True
+        else:
             self.print_result(
                 "Connexion sans TLS",
                 False,
                 "SÉCURITÉ COMPROMISE: Connexion réussie sans TLS!"
             )
             return False
-            
-        except Exception as e:
-            # C'est ce qu'on attend - la connexion doit échouer
-            self.print_result(
-                "Connexion sans TLS",
-                True,
-                f"Connexion refusée comme attendu: {str(e)[:50]}"
-            )
-            return True
     
     def test_connection_with_wrong_certs(self):
         """Test 2: Connexion avec mauvais certificats doit échouer"""

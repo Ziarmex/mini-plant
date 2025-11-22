@@ -1,0 +1,165 @@
+{
+  "title": "Mini-Usine IoT Dashboard",
+  "uid": "mini-plant-iot",
+  "description": "Tableau de bord de supervision pour Mini-Usine IoT",
+  "schemaVersion": 36,
+  "version": 1,
+  "tags": ["iot", "mini-plant"],
+  "timezone": "browser",
+  "editable": true,
+  "refresh": "10s",
+  "time": {
+    "from": "now-15m",
+    "to": "now"
+  },
+  "timepicker": {},
+  "templating": {
+    "list": []
+  },
+  "panels": [
+    {
+      "title": "État des machines de production",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "query": "from(bucket: \"iot-data\") |> range(start: v.timeRangeStart, stop: v.timeRangeStop) |> filter(fn: (r) => r._measurement == \"production\" and r._field == \"speed\") |> aggregateWindow(every: 10s, fn: mean) |> yield(name: \"speed\")",
+          "datasource": "InfluxDB-MiniPlant"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "rpm",
+          "min": 0
+        }
+      }
+    },
+    {
+      "title": "Capteurs de température",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "targets": [
+        {
+          "query": "from(bucket: \"iot-data\") |> range(start: v.timeRangeStart, stop: v.timeRangeStop) |> filter(fn: (r) => r._measurement == \"temperature\" and r._field == \"temperature\") |> aggregateWindow(every: 10s, fn: mean) |> yield(name: \"temperature\")",
+          "datasource": "InfluxDB-MiniPlant"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "celsius",
+          "min": 0,
+          "max": 120
+        }
+      }
+    },
+    {
+      "title": "Efficacité des machines",
+      "type": "gauge",
+      "gridPos": { "h": 8, "w": 6, "x": 0, "y": 8 },
+      "targets": [
+        {
+          "query": "from(bucket: \"iot-data\") |> range(start: v.timeRangeStart, stop: v.timeRangeStop) |> filter(fn: (r) => r._measurement == \"production\" and r._field == \"efficiency\") |> last() |> yield(name: \"efficiency\")",
+          "datasource": "InfluxDB-MiniPlant"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 50 },
+              { "color": "green", "value": 80 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "Surveillance de pression",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 6, "x": 6, "y": 8 },
+      "targets": [
+        {
+          "query": "from(bucket: \"iot-data\") |> range(start: v.timeRangeStart, stop: v.timeRangeStop) |> filter(fn: (r) => r._measurement == \"pressure\" and r._field == \"pressure\") |> aggregateWindow(every: 10s, fn: mean) |> yield(name: \"pressure\")",
+          "datasource": "InfluxDB-MiniPlant"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bar",
+          "min": 0
+        }
+      }
+    },
+    {
+      "title": "Analyse des vibrations",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 6, "x": 12, "y": 8 },
+      "targets": [
+        {
+          "query": "from(bucket: \"iot-data\") |> range(start: v.timeRangeStart, stop: v.timeRangeStop) |> filter(fn: (r) => r._measurement == \"vibration\" and (r._field == \"vibration_x\" or r._field == \"vibration_y\" or r._field == \"vibration_z\")) |> aggregateWindow(every: 10s, fn: mean) |> yield(name: \"vibration\")",
+          "datasource": "InfluxDB-MiniPlant"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "mms"
+        }
+      }
+    },
+    {
+      "title": "Consommation d'énergie",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 6, "x": 18, "y": 8 },
+      "targets": [
+        {
+          "query": "from(bucket: \"iot-data\") |> range(start: v.timeRangeStart, stop: v.timeRangeStop) |> filter(fn: (r) => r._measurement == \"energy\" and r._field == \"power\") |> aggregateWindow(every: 10s, fn: mean) |> yield(name: \"power\")",
+          "datasource": "InfluxDB-MiniPlant"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "kw"
+        }
+      }
+    },
+    {
+      "title": "Temps d'arrêt machine",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 16 },
+      "targets": [
+        {
+          "query": "from(bucket: \"iot-data\") |> range(start: v.timeRangeStart, stop: v.timeRangeStop) |> filter(fn: (r) => r._measurement == \"production\" and r._field == \"downtime\") |> last() |> yield(name: \"downtime\")",
+          "datasource": "InfluxDB-MiniPlant"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "min": 0
+        }
+      }
+    },
+    {
+      "title": "Énergie totale consommée",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 16 },
+      "targets": [
+        {
+          "query": "from(bucket: \"iot-data\") |> range(start: v.timeRangeStart, stop: v.timeRangeStop) |> filter(fn: (r) => r._measurement == \"energy\" and r._field == \"energy_total\") |> last() |> yield(name: \"energy_total\")",
+          "datasource": "InfluxDB-MiniPlant"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "kwh",
+          "min": 0
+        }
+      }
+    }
+  ]
+}

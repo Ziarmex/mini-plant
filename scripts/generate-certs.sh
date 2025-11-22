@@ -32,10 +32,11 @@ echo "[4/7] Création de la demande de certificat serveur..."
 openssl req -new -key server.key -out server.csr \
     -subj "/C=FR/ST=Setif/L=Setif/O=MiniPlant-IoT/OU=MQTT/CN=mosquitto"
 
-# 5. Signer le certificat serveur avec la CA
+# 5. Signer le certificat serveur avec la CA (avec SAN pour localhost et mosquitto)
 echo "[5/7] Signature du certificat serveur..."
 openssl x509 -req -in server.csr -CA ca.crt -CAkey ca.key \
-    -CAcreateserial -out server.crt -days $DAYS_VALID
+    -CAcreateserial -out server.crt -days $DAYS_VALID \
+    -extfile <(echo "subjectAltName=DNS:mosquitto,DNS:localhost")
 
 # 6. Générer la clé privée du client
 echo "[6/7] Génération de la clé privée client..."
